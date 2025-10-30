@@ -33,13 +33,31 @@ Easily manage your daily expenses, track income, and visualize spending trends t
 | **Date Formatting** | intl |
 
 ---
+## Screenshots 
 
+## 1 Splash Screen
 <img src="assets/1_splash.png" width="358" alt="Splash Screen">
+
+## 2 Dashboard Screen
+
 <img src="assets/2_dashbaord.png" width="358" alt="Dashboard Screen">
+
+## 3 Dashboard Screen
 <img src="assets/3_dashboard.png" width="358" alt="Dashboard Screen">
+
+## 4 Add Transaction Screen
+
 <img src="assets/4_add_transaction.png" width="358" alt="Add Transaction Screen">
+
+## 5 Add Transaction Screen
 <img src="assets/5_transaction_list.png" width="358" alt="Add Transaction Screen">
+
+## 6 Add Budget Screen
+
 <img src="assets/6_add_budget.png" width="358" alt="Add Budget Screen">
+
+## 7 Add Budget List Screen
+
 <img src="assets/7_budget_list.png" width="358" alt="Add Budget List Screen">
 
 A few resources to get you started if this is your first Flutter project:
