@@ -70,6 +70,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
             const SizedBox(height: 10),
             BlocBuilder<BudgetCubit, BudgetState>(
               builder: (context, state) {
+
+                final isDark = Theme.of(context).brightness == Brightness.dark;
                 if (state.loading) {
                   return const Center(child: CircularProgressIndicator());
                 }
@@ -103,17 +105,22 @@ class _DashboardScreenState extends State<DashboardScreen> {
                           ),
                         ],
                         gradient: LinearGradient(
-                          colors: [
-                            theme.colorScheme.surface,
-                            theme.colorScheme.surfaceContainerHighest,
-                          ],
+                          colors:  isDark
+                              ? [
+                            Colors.grey.shade300,
+                            Colors.grey.shade800,
+                          ]
+                              : [
+                            Theme.of(context).colorScheme.surface,
+                            Theme.of(context).colorScheme.surfaceContainerHighest,
+                          ]
                         ),
                       ),
                       margin: const EdgeInsets.only(bottom: 12),
                       child: ListTile(
                         title: Text(
                           budget.category,
-                          style: const TextStyle(fontWeight: FontWeight.w600),
+                          style: const TextStyle(fontWeight: FontWeight.w600,color: Colors.black),
                         ),
                         subtitle: Padding(
                           padding: const EdgeInsets.only(top: 4.0),
