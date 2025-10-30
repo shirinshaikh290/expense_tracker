@@ -50,48 +50,6 @@ class _TransactionScreenState extends State<TransactionScreen> {
     );
   }
 
-  /* void _showAddDialog(TransactionCubit cubit) {
-    showDialog(
-      context: context,
-      builder: (_) => AlertDialog(
-        title: const Text('Add Transaction'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            TextField(controller: _titleController, decoration: const InputDecoration(labelText: 'Title')),
-            TextField(controller: _amountController, decoration: const InputDecoration(labelText: 'Amount'), keyboardType: TextInputType.number),
-            DropdownButton<String>(
-              value: category,
-              onChanged: (v) => setState(() => category = v!),
-              items: ['Food', 'Travel', 'Bills', 'Other']
-                  .map((e) => DropdownMenuItem(value: e, child: Text(e)))
-                  .toList(),
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () {
-              final tx = TransactionModel(
-                title: _titleController.text,
-                category: category,
-                amount: double.tryParse(_amountController.text) ?? 0.0,
-                date: DateTime.now().toIso8601String(),
-              );
-              cubit.addTransaction(tx);
-
-              // 🔄 Refresh budgets
-              context.read<BudgetCubit>().loadBudgets();
-              Navigator.pop(context);
-            },
-            child: const Text('Save'),
-          ),
-        ],
-      ),
-    );
-  }
-}*/
-
   void _showAddDialog(TransactionCubit cubit) {
     final budgetState = context
         .read<BudgetCubit>()
@@ -111,38 +69,64 @@ class _TransactionScreenState extends State<TransactionScreen> {
     final _titleController = TextEditingController();
     final _amountController = TextEditingController();
     String category = categories.first;
+    final _formKey = GlobalKey<FormState>();
 
     showDialog(
       context: context,
       builder: (_) =>
           AlertDialog(
             title: const Text('Add Transaction'),
-            content: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                TextField(
-                  controller: _titleController,
-                  decoration: const InputDecoration(labelText: 'Title'),
-                ),
-                const SizedBox(height: 8),
-                TextField(
-                  controller: _amountController,
-                  decoration: const InputDecoration(labelText: 'Amount'),
-                  keyboardType: TextInputType.number,
-                ),
-                const SizedBox(height: 8),
-                DropdownButton<String>(
-                  value: category,
-                  onChanged: (v) {
-                    if (v != null) {
-                      category = v;
-                    }
-                  },
-                  items: categories
-                      .map((e) => DropdownMenuItem(value: e, child: Text(e)))
-                      .toList(),
-                ),
-              ],
+            content: Form(
+              key: _formKey,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  TextFormField(
+                    controller: _titleController,
+                    decoration: const InputDecoration(labelText: 'Title'),
+                    validator: (value) {
+                      if (value == null || value.trim().isEmpty) {
+                        return 'Please enter a title';
+                      }
+                      return null;
+                    },
+                  ),
+                  const SizedBox(height: 8),
+                  TextFormField(
+                    controller: _amountController,
+                    decoration: const InputDecoration(labelText: 'Amount'),
+                    keyboardType: TextInputType.number,
+                    validator: (value) {
+                      if (value == null || value.trim().isEmpty) {
+                        return 'Please enter an amount';
+                      }
+                      final parsed = double.tryParse(value);
+                      if (parsed == null || parsed <= 0) {
+                        return 'Enter a valid amount';
+                      }
+                      return null;
+                    },
+                  ),
+                  const SizedBox(height: 8),
+                  Row(
+                    children: [
+                      DropdownButton<String>(
+                        padding: EdgeInsets.all(10),
+                        hint: Text("Select Category"),
+                        value: category,
+                        onChanged: (v) {
+                          if (v != null) {
+                            category = v;
+                          }
+                        },
+                        items: categories
+                            .map((e) => DropdownMenuItem(value: e, child: Text(e)))
+                            .toList(),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
             ),
             actions: [
               TextButton(
@@ -151,50 +135,53 @@ class _TransactionScreenState extends State<TransactionScreen> {
               ),
               TextButton(
                 onPressed: () {
-                  final title = _titleController.text.trim();
-                  final amountText = _amountController.text.trim();
 
-                  if (title.isEmpty || amountText.isEmpty) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text('Please fill all fields.'),
-                        backgroundColor: Colors.orange,
-                      ),
-                    );
-                    return;
-                  }
+    if (_formKey.currentState!.validate()) {
+      final title = _titleController.text.trim();
+      final amountText = _amountController.text.trim();
 
-                  final amount = double.tryParse(amountText);
-                  if (amount == null || amount <= 0) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text('Please enter a valid amount.'),
-                        backgroundColor: Colors.orange,
-                      ),
-                    );
-                    return;
-                  }
+      if (title.isEmpty || amountText.isEmpty) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Please fill all fields.'),
+            backgroundColor: Colors.orange,
+          ),
+        );
+        return;
+      }
 
-                  final tx = TransactionModel(
-                    title: title,
-                    category: category,
-                    amount: amount,
-                    date: DateTime.now().toIso8601String(),
-                  );
+      final amount = double.tryParse(amountText);
+      if (amount == null || amount <= 0) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Please enter a valid amount.'),
+            backgroundColor: Colors.orange,
+          ),
+        );
+        return;
+      }
 
-                  cubit.addTransaction(tx);
+      final tx = TransactionModel(
+        title: title,
+        category: category,
+        amount: amount,
+        date: DateTime.now().toIso8601String(),
+      );
 
-                  // 🔄 Refresh budget values after adding transaction
-                  context.read<BudgetCubit>().loadBudgets();
+      cubit.addTransaction(tx);
 
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text('Transaction added under "$category"'),
-                      backgroundColor: Colors.green,
-                    ),
-                  );
+      // 🔄 Refresh budget values after adding transaction
+      context.read<BudgetCubit>().loadBudgets();
 
-                  Navigator.pop(context);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Transaction added under "$category"'),
+          backgroundColor: Colors.green,
+        ),
+      );
+
+      Navigator.pop(context);
+    }
                 },
                 child: const Text('Save'),
               ),
