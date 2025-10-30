@@ -100,11 +100,16 @@ class _BudgetScreenState extends State<BudgetScreen> {
                         ),
                         onPressed: () {
                           if (formKey.currentState!.validate()) {
+
+                            final now = DateTime.now();
+
                             final category = _categoryController.text.trim();
                             final amount =
                             double.parse(_amountController.text.trim());
 
                             final newBudget = BudgetModel(
+                                month: now.month,
+                                year: now.year,
                                 category: category, limitAmount: amount);
                             context.read<BudgetCubit>().addBudget(newBudget);
                             Navigator.pop(ctx);

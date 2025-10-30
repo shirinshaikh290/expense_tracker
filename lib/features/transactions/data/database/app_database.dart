@@ -29,11 +29,13 @@ class AppDatabase {
         ''');
 
         await db.execute('''
-          CREATE TABLE budgets(
+            CREATE TABLE budgets(
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             category TEXT,
-            limitAmount REAL
-          )
+            limitAmount REAL,
+            month INTEGER,
+            year INTEGER
+        )
         ''');
       },
     );

@@ -7,6 +7,22 @@ class BudgetRepository {
     final res = await db.query('budgets');
     return res.map((e) => BudgetModel.fromMap(e)).toList();
   }
+  Future<List<BudgetModel>> getBudgetsmonth({int? month, int? year}) async {
+
+    final db = await AppDatabase.database;
+    final now = DateTime.now();
+    final m = month ?? now.month;
+    final y = year ?? now.year;
+
+    final result = await db.query(
+      'budgets',
+      where: 'month = ? AND year = ?',
+      whereArgs: [m, y],
+    );
+    return result.map((e) => BudgetModel.fromMap(e)).toList();
+  }
+
+
 
   Future<int> addBudget(BudgetModel budget) async {
     final db = await AppDatabase.database;
@@ -19,13 +35,16 @@ class BudgetRepository {
   }
 
   /// 🔹 Get total spent for a specific category
-  Future<double> getTotalSpentForCategory(String category) async {
+  Future<double> getTotalSpentForCategory(String category, int month, int year) async {
+
     final db = await AppDatabase.database;
-    final res = await db.rawQuery(
-      'SELECT SUM(amount) as total FROM transactions WHERE category = ?',
-      [category],
-    );
-    return (res.first['total'] as num?)?.toDouble() ?? 0.0;
+
+    final result = await db.rawQuery('''
+      SELECT SUM(amount) as total
+      FROM transactions
+      WHERE category = ? AND strftime('%m', date) = ? AND strftime('%Y', date) = ?
+    ''', [category, month.toString().padLeft(2, '0'), year.toString()]);
+    return (result.first['total'] as double?) ?? 0;
   }
 
   Future<void> deleteBudgetAndTransactions(String category) async {

@@ -43,9 +43,15 @@ class BudgetCubit extends Cubit<BudgetState> {
     emit(state.copyWith(loading: true, errorMessage: null));
     final budgets = await _repo.getBudgets();
 
+    final now = DateTime.now();
+
     final Map<String, double> spentData = {};
     for (var b in budgets) {
-      spentData[b.category] = await _repo.getTotalSpentForCategory(b.category);
+      spentData[b.category] = await _repo.getTotalSpentForCategory(
+        b.category,
+        now.month,
+        now.year,
+      );
     }
 
     emit(BudgetState(budgets: budgets, spentPerCategory: spentData));
