@@ -1,10 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:intl/intl.dart';
 import '../../data/models/transaction_model.dart';
 import '../budget_cubit/budget_cubit.dart';
 import '../transaction_cubit/transaction_controller.dart';
-import '../widgets/transaction_tile.dart';
-
 
 class TransactionScreen extends StatefulWidget {
   const TransactionScreen({super.key});
@@ -14,46 +13,106 @@ class TransactionScreen extends StatefulWidget {
 }
 
 class _TransactionScreenState extends State<TransactionScreen> {
-  final _titleController = TextEditingController();
-  final _amountController = TextEditingController();
-  String category = 'Food';
-
   @override
   Widget build(BuildContext context) {
     final cubit = context.read<TransactionCubit>();
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Transactions')),
+      backgroundColor: Theme.of(context).colorScheme.surface,
+      appBar: AppBar(
+        title: const Text('Transactions'),
+        centerTitle: true,
+        elevation: 0,
+      ),
       body: BlocBuilder<TransactionCubit, TransactionState>(
         builder: (context, state) {
-          if (state.loading)
+          if (state.loading) {
             return const Center(child: CircularProgressIndicator());
+          }
+
+          if (state.transactions.isEmpty) {
+            return Center(
+              child: Text(
+                "No transactions yet.\nTap '+' to add one!",
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  color: Theme.of(context).hintColor,
+                  fontSize: 16,
+                ),
+              ),
+            );
+          }
 
           return ListView.builder(
+            padding: const EdgeInsets.all(16),
             itemCount: state.transactions.length,
             itemBuilder: (context, index) {
               final tx = state.transactions[index];
+              final date = DateFormat('dd/MM/yyyy').format(DateTime.parse(tx.date));
               return Dismissible(
                 key: ValueKey(tx.id),
-                background: Container(color: Colors.red),
+                background: Container(
+                  decoration: BoxDecoration(
+                    color: Colors.red.shade400,
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  alignment: Alignment.centerRight,
+                  padding: const EdgeInsets.only(right: 20),
+                  child: const Icon(Icons.delete, color: Colors.white),
+                ),
                 onDismissed: (_) => cubit.deleteTransaction(tx.id!),
-                child: TransactionTile(transaction: tx),
+                child: Card(
+                  elevation: 3,
+                  shadowColor: Colors.black12,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                  margin: const EdgeInsets.only(bottom: 12),
+                  child: ListTile(
+                    contentPadding:
+                    const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                    leading: CircleAvatar(
+                      backgroundColor:
+                      Theme.of(context).colorScheme.primary.withOpacity(0.15),
+                      child: Icon(
+                        Icons.category_outlined,
+                        color: Theme.of(context).colorScheme.primary,
+                      ),
+                    ),
+                    title: Text(
+                      tx.title,
+                      style: const TextStyle(
+                        fontWeight: FontWeight.w600,
+                        fontSize: 16,
+                      ),
+                    ),
+                    subtitle: Text(
+                      "${tx.category} • $date",
+                      style: TextStyle(color: Colors.grey.shade600),
+                    ),
+                    trailing: Text(
+                      "₹${tx.amount.toStringAsFixed(2)}",
+                      style: TextStyle(
+                        color: Theme.of(context).colorScheme.primary,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 16,
+                      ),
+                    ),
+                  ),
+                ),
               );
             },
           );
         },
       ),
-      floatingActionButton: FloatingActionButton(
+      floatingActionButton: FloatingActionButton.extended(
         onPressed: () => _showAddDialog(cubit),
-        child: const Icon(Icons.add),
+        icon: const Icon(Icons.add),
+        label: const Text("Add Transaction"),
       ),
     );
   }
 
   void _showAddDialog(TransactionCubit cubit) {
-    final budgetState = context
-        .read<BudgetCubit>()
-        .state;
+    final budgetState = context.read<BudgetCubit>().state;
     final categories = budgetState.budgets.map((b) => b.category).toList();
 
     if (categories.isEmpty) {
@@ -66,128 +125,147 @@ class _TransactionScreenState extends State<TransactionScreen> {
       return;
     }
 
-    final _titleController = TextEditingController();
-    final _amountController = TextEditingController();
+    final formKey = GlobalKey<FormState>();
+    final titleController = TextEditingController();
+    final amountController = TextEditingController();
     String category = categories.first;
-    final _formKey = GlobalKey<FormState>();
 
     showDialog(
       context: context,
-      builder: (_) =>
-          AlertDialog(
-            title: const Text('Add Transaction'),
-            content: Form(
-              key: _formKey,
+      builder: (_) => Dialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        insetPadding: const EdgeInsets.all(20),
+        child: SingleChildScrollView(
+          child: Padding(
+            padding: const EdgeInsets.all(24.0),
+            child: Form(
+              key: formKey,
               child: Column(
                 mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  TextFormField(
-                    controller: _titleController,
-                    decoration: const InputDecoration(labelText: 'Title'),
-                    validator: (value) {
-                      if (value == null || value.trim().isEmpty) {
-                        return 'Please enter a title';
-                      }
-                      return null;
-                    },
+                  Center(
+                    child: Text(
+                      'Add Transaction',
+                      style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                        fontWeight: FontWeight.bold,
+                        color: Theme.of(context).colorScheme.primary,
+                      ),
+                    ),
                   ),
-                  const SizedBox(height: 8),
+                  const SizedBox(height: 20),
                   TextFormField(
-                    controller: _amountController,
-                    decoration: const InputDecoration(labelText: 'Amount'),
+                    controller: titleController,
+                    decoration: InputDecoration(
+                      labelText: 'Title',
+                      prefixIcon: const Icon(Icons.title_outlined),
+                      filled: true,
+                      fillColor: Theme.of(context)
+                          .colorScheme
+                          .surfaceVariant
+                          .withOpacity(0.2),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                    validator: (value) =>
+                    (value == null || value.isEmpty) ? 'Enter title' : null,
+                  ),
+                  const SizedBox(height: 15),
+                  TextFormField(
+                    controller: amountController,
                     keyboardType: TextInputType.number,
+                    decoration: InputDecoration(
+                      labelText: 'Amount',
+                      prefixIcon: const Icon(Icons.currency_rupee),
+                      filled: true,
+                      fillColor: Theme.of(context)
+                          .colorScheme
+                          .surfaceVariant
+                          .withOpacity(0.2),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
                     validator: (value) {
                       if (value == null || value.trim().isEmpty) {
-                        return 'Please enter an amount';
+                        return 'Enter amount';
                       }
                       final parsed = double.tryParse(value);
                       if (parsed == null || parsed <= 0) {
-                        return 'Enter a valid amount';
+                        return 'Enter a valid positive number';
                       }
                       return null;
                     },
                   ),
-                  const SizedBox(height: 8),
+                  const SizedBox(height: 15),
+                  DropdownButtonFormField<String>(
+                    value: category,
+                    decoration: InputDecoration(
+                      labelText: 'Category',
+                      prefixIcon: const Icon(Icons.category),
+                      filled: true,
+                      fillColor: Theme.of(context)
+                          .colorScheme
+                          .surfaceVariant
+                          .withOpacity(0.2),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                    items: categories
+                        .map((e) =>
+                        DropdownMenuItem(value: e, child: Text(e)))
+                        .toList(),
+                    onChanged: (v) {
+                      if (v != null) category = v;
+                    },
+                    validator: (value) =>
+                    value == null ? 'Select category' : null,
+                  ),
+                  const SizedBox(height: 25),
                   Row(
+                    mainAxisAlignment: MainAxisAlignment.end,
                     children: [
-                      DropdownButton<String>(
-                        padding: EdgeInsets.all(10),
-                        hint: Text("Select Category"),
-                        value: category,
-                        onChanged: (v) {
-                          if (v != null) {
-                            category = v;
+                      TextButton.icon(
+                        icon: const Icon(Icons.close),
+                        label: const Text('Cancel'),
+                        onPressed: () => Navigator.pop(context),
+                      ),
+                      const SizedBox(width: 10),
+                      ElevatedButton.icon(
+                        icon: const Icon(Icons.save),
+                        label: const Text('Save'),
+                        onPressed: () {
+                          if (formKey.currentState!.validate()) {
+                            final tx = TransactionModel(
+                              title: titleController.text.trim(),
+                              category: category,
+                              amount:
+                              double.parse(amountController.text.trim()),
+                              date: DateTime.now().toIso8601String(),
+                            );
+                            cubit.addTransaction(tx);
+                            context.read<BudgetCubit>().loadBudgets();
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text(
+                                    'Transaction added under "$category"'),
+                                backgroundColor: Colors.green,
+                              ),
+                            );
+                            Navigator.pop(context);
                           }
                         },
-                        items: categories
-                            .map((e) => DropdownMenuItem(value: e, child: Text(e)))
-                            .toList(),
                       ),
                     ],
                   ),
                 ],
               ),
             ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(context),
-                child: const Text('Cancel'),
-              ),
-              TextButton(
-                onPressed: () {
-
-    if (_formKey.currentState!.validate()) {
-      final title = _titleController.text.trim();
-      final amountText = _amountController.text.trim();
-
-      if (title.isEmpty || amountText.isEmpty) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Please fill all fields.'),
-            backgroundColor: Colors.orange,
           ),
-        );
-        return;
-      }
-
-      final amount = double.tryParse(amountText);
-      if (amount == null || amount <= 0) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Please enter a valid amount.'),
-            backgroundColor: Colors.orange,
-          ),
-        );
-        return;
-      }
-
-      final tx = TransactionModel(
-        title: title,
-        category: category,
-        amount: amount,
-        date: DateTime.now().toIso8601String(),
-      );
-
-      cubit.addTransaction(tx);
-
-      // 🔄 Refresh budget values after adding transaction
-      context.read<BudgetCubit>().loadBudgets();
-
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Transaction added under "$category"'),
-          backgroundColor: Colors.green,
         ),
-      );
-
-      Navigator.pop(context);
-    }
-                },
-                child: const Text('Save'),
-              ),
-            ],
-          ),
+      ),
     );
   }
-
 }
