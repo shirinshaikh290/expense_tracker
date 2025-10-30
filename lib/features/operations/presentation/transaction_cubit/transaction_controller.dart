@@ -30,4 +30,9 @@ class TransactionCubit extends Cubit<TransactionState> {
     await _repo.deleteTransaction(id);
     await loadTransactions();
   }
+
+  Future<Map<String, double>> fetchCategoryTotals() async {
+    final data = await _repo.getCategoryTotals();
+    return data;
+  }
 }

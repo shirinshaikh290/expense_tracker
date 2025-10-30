@@ -65,11 +65,11 @@ class BudgetCubit extends Cubit<BudgetState> {
   Future<void> deleteBudgetSafely(String category, BuildContext context) async {
     final success = await _repo.deleteBudgetSafely(category);
     if (!success) {
-      emit(state.copyWith(errorMessage: 'Cannot delete — transactions exist for this category.'));
+      emit(state.copyWith(errorMessage: 'Cannot delete — operations exist for this category.'));
 
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Cannot delete budget — existing transactions found.'),
+          content: Text('Cannot delete budget — existing operations found.'),
           backgroundColor: Colors.redAccent,
         ),
       );

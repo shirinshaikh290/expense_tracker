@@ -2,13 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
 
-import '../transactions/presentation/budget_cubit/budget_cubit.dart';
-import '../transactions/presentation/screens/budget_screen.dart';
-import '../transactions/presentation/screens/transaction_screen.dart';
-import '../transactions/presentation/transaction_cubit/transaction_controller.dart';
-
-
-
+import '../../themes/theme_cubit.dart';
+import '../operations/presentation/budget_cubit/budget_cubit.dart';
+import '../operations/presentation/screens/budget_screen.dart';
+import '../operations/presentation/screens/transaction_screen.dart';
+import '../operations/presentation/transaction_cubit/transaction_controller.dart';
+import 'expense_chart.dart';
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
 
@@ -36,6 +35,20 @@ class _DashboardScreenState extends State<DashboardScreen> {
         title: const Text('Dashboard'),
         centerTitle: true,
         elevation: 0,
+        actions: [
+          BlocBuilder<ThemeCubit, ThemeMode>(
+            builder: (context, themeMode) {
+              final isDark = themeMode == ThemeMode.dark;
+              return IconButton(
+                icon: Icon(isDark ? Icons.light_mode : Icons.dark_mode),
+                tooltip: isDark ? 'Switch to Light Mode' : 'Switch to Dark Mode',
+                onPressed: () {
+                  context.read<ThemeCubit>().toggleTheme();
+                },
+              );
+            },
+          ),
+        ],
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
@@ -146,7 +159,55 @@ class _DashboardScreenState extends State<DashboardScreen> {
               },
             ),
 
+            /// 📈 Expense Chart by Category
+            BlocBuilder<TransactionCubit, TransactionState>(
+              builder: (context, txState) {
+                if (txState.loading) {
+                  return const Center(child: CircularProgressIndicator());
+                }
+
+                if (txState.transactions.isEmpty) {
+                  return const Center(
+                    child: Padding(
+                      padding: EdgeInsets.all(20),
+                      child: Text(
+                        'No transactions yet — add one to see chart data!',
+                        style: TextStyle(color: Colors.grey),
+                      ),
+                    ),
+                  );
+                }
+
+                // ✅ Compute category totals dynamically from current transactions
+                final Map<String, double> categoryTotals = {};
+                for (var tx in txState.transactions) {
+                  categoryTotals[tx.category] =
+                      (categoryTotals[tx.category] ?? 0) + tx.amount;
+                }
+
+                return ExpenseChart(categoryData: categoryTotals);
+              },
+            ),
+
             const SizedBox(height: 20),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                IconButton(
+                  icon: const Icon(Icons.chevron_left),
+                  onPressed: () => _changeMonth(-1),
+                ),
+                Text(
+                  '${DateFormat.yMMMM().format(DateTime(selectedYear, selectedMonth))}',
+                  style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                ),
+                IconButton(
+                  icon: const Icon(Icons.chevron_right),
+                  onPressed: () => _changeMonth(1),
+                ),
+              ],
+            ),
+             SizedBox(height: 20),
           BlocBuilder<TransactionCubit, TransactionState>(
             builder: (context, state) {
               if (state.loading) {
@@ -170,7 +231,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                         Icon(Icons.receipt_long, size: 64, color: Colors.grey.shade400),
                         const SizedBox(height: 12),
                         Text(
-                          'No transactions this month.',
+                          'No operations this month.',
                           style: TextStyle(
                             color: Colors.grey.shade600,
                             fontSize: 16,
@@ -252,25 +313,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
               );
             },
           ),
-          const SizedBox(height: 30),
-
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                IconButton(
-                  icon: const Icon(Icons.chevron_left),
-                  onPressed: () => _changeMonth(-1),
-                ),
-                Text(
-                  '${DateFormat.yMMMM().format(DateTime(selectedYear, selectedMonth))}',
-                  style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                ),
-                IconButton(
-                  icon: const Icon(Icons.chevron_right),
-                  onPressed: () => _changeMonth(1),
-                ),
-              ],
-            )
+          const SizedBox(height: 200),
           ],
         ),
       ),
@@ -412,7 +455,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   style: TextStyle(
                       color: Colors.white.withOpacity(0.8),
                       fontWeight: FontWeight.w500)),
-              Text(
+              totalBudget.toStringAsFixed(2)==0?CircularProgressIndicator():Text(
                 '₹${totalBudget.toStringAsFixed(2)}',
                 style: const TextStyle(
                     color: Colors.white,

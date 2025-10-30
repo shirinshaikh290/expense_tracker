@@ -33,7 +33,7 @@ class _TransactionScreenState extends State<TransactionScreen> {
           if (state.transactions.isEmpty) {
             return Center(
               child: Text(
-                "No transactions yet.\nTap '+' to add one!",
+                "No operations yet.\nTap '+' to add one!",
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   color: Theme.of(context).hintColor,

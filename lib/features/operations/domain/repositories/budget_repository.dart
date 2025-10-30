@@ -51,7 +51,7 @@ class BudgetRepository {
     final db = await AppDatabase.database;
 
     await db.transaction((txn) async {
-      // Delete transactions for that category
+      // Delete operations for that category
       await txn.delete(
         'transactions',
         where: 'category = ?',
@@ -66,7 +66,7 @@ class BudgetRepository {
       );
     });
   }
-  // 🔹 Check if any transactions exist for this category
+  // 🔹 Check if any operations exist for this category
   Future<bool> hasTransactions(String category) async {
     final db = await AppDatabase.database;
     final res = await db.query(

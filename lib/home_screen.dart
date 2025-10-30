@@ -1,8 +1,8 @@
-import 'package:expense_tracker_app/features/transactions/presentation/screens/transaction_screen.dart';
 import 'package:flutter/material.dart';
 
-import 'features/transactions/presentation/screens/budget_screen.dart';
 import 'features/dashboard/dashboard_screen.dart';
+import 'features/operations/presentation/screens/budget_screen.dart';
+import 'features/operations/presentation/screens/transaction_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});

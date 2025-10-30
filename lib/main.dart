@@ -1,11 +1,12 @@
+import 'package:expense_tracker_app/splash_screen.dart';
 import 'package:expense_tracker_app/themes/theme_cubit.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
-import 'features/transactions/domain/repositories/budget_repository.dart';
-import 'features/transactions/domain/repositories/transaction_repository.dart';
-import 'features/transactions/presentation/budget_cubit/budget_cubit.dart';
-import 'features/transactions/presentation/transaction_cubit/transaction_controller.dart';
+import 'features/operations/domain/repositories/budget_repository.dart';
+import 'features/operations/domain/repositories/transaction_repository.dart';
+import 'features/operations/presentation/budget_cubit/budget_cubit.dart';
+import 'features/operations/presentation/transaction_cubit/transaction_controller.dart';
 import 'home_screen.dart';
 
 void main() {
@@ -36,7 +37,7 @@ class MyApp extends StatelessWidget {
             theme: ThemeData.light(useMaterial3: true),
             darkTheme: ThemeData.dark(useMaterial3: true),
             themeMode: themeMode,
-            home: const HomeScreen(),
+            home:SplashScreen(),
             debugShowCheckedModeBanner: false,
           );
         },
